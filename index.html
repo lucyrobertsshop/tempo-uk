@@ -479,9 +479,20 @@ async function fetchCity(city) {
     `&hourly=temperature_2m,weather_code,precipitation_probability,is_day` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,snowfall_sum,rain_sum` +
     `&wind_speed_unit=kmh&timezone=Europe/London&forecast_days=7`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('API error');
-  return r.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!r.ok) throw new Error(`Erro ${r.status}`);
+    const data = await r.json();
+    if (data.error) throw new Error(data.reason || 'Erro da API');
+    return data;
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Tempo limite excedido (15s)');
+    throw e;
+  }
 }
 
 function sunArcSVG() {
