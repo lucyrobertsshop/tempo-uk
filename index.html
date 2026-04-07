@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempo UK — Peterborough & Boston</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2c3e6b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #2c3e6b 0%, #1a2a50 40%, #0f1f3d 100%);
+      color: #fff;
+      padding: 24px 16px 40px;
+    }
+
+    .greeting {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .greeting-salute {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .greeting-names {
+      font-size: 1rem;
+      color: #8ecae6;
+      font-weight: 300;
+      margin-top: 2px;
+    }
+
+    .verse-block {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px 22px;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto 28px;
+      text-align: center;
+    }
+
+    .verse-text {
+      font-size: 0.95rem;
+      font-style: italic;
+      color: #dce8f5;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .verse-ref {
+      font-size: 0.75rem;
+      color: #8ecae6;
+      letter-spacing: 1px;
+    }
+
+    .verse-loading {
+      font-size: 0.85rem;
+      color: #8ecae6;
+      animation: pulse 1.5s infinite;
+    }
+
+    .cities {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .city-card {
+      flex: 1 1 460px;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 24px 28px 20px;
+    }
+
+    .city-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .city-label span.pin { font-size: 1rem; }
+    .city-label span.region { font-size: 0.72rem; color: #8ecae6; font-weight: 400; margin-left: 4px; }
+
+    .city-datetime {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: #cdd9e8;
+      font-weight: 400;
+      white-space: nowrap;
+      text-align: right;
+      line-height: 1.3;
+    }
+
+    .city-datetime .dt-date { font-size: 0.7rem; color: #8ecae6; }
+
+    .flag-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .flag-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .hero-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .main-temp {
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .main-temp sup { font-size: 2rem; vertical-align: super; }
+
+    .hero-right { text-align: right; }
+
+    .hi-lo {
+      font-size: 1rem;
+      color: #cdd9e8;
+      margin-bottom: 4px;
+    }
+
+    .feels {
+      font-size: 0.85rem;
+      color: #8ecae6;
+    }
+
+    .weather-summary {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: #c8d8ea;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .weather-summary .wi { font-size: 1.4rem; }
+
+    /* ── HOURLY ── */
+    .block {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+
+    .block-title {
+      font-size: 0.68rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8ecae6;
+      margin-bottom: 12px;
+    }
+
+    .hourly-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(142,202,230,0.4) rgba(255,255,255,0.05);
+    }
+
+    .hourly-scroll::-webkit-scrollbar {
+      height: 5px;
+    }
+
+    .hourly-scroll::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+
+    .hourly-scroll::-webkit-scrollbar-thumb {
+      background: rgba(142,202,230,0.4);
+      border-radius: 10px;
+    }
+
+    .hour-item.day-divider {
+      min-width: 2px;
+      background: rgba(142,202,230,0.25);
+      border-radius: 2px;
+      align-self: stretch;
+      padding: 0;
+    }
+
+    .hour-item.day-label {
+      min-width: auto;
+      background: transparent;
+      padding: 0 4px;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: #8ecae6;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .hour-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-width: 52px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 10px 6px;
+    }
+
+    .hour-item .h-time { font-size: 0.72rem; color: #8ecae6; }
+    .hour-item .h-icon { font-size: 1.4rem; }
+    .hour-item .h-temp { font-size: 0.9rem; font-weight: 600; }
+    .hour-item .h-rain { font-size: 0.68rem; color: #74b4d4; }
+
+    /* ── SUNRISE ── */
+    .sunrise-block {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .sunrise-arc {
+      position: relative;
+      width: 70px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    .sunrise-arc svg { width: 100%; height: 100%; }
+
+    .sunrise-info { flex: 1; }
+    .sunrise-info .sr-label { font-size: 0.72rem; color: #8ecae6; }
+    .sunrise-info .sr-time { font-size: 1.1rem; font-weight: 600; margin-top: 2px; }
+    .sunrise-info .sr-sub { font-size: 0.72rem; color: #8ecae6; margin-top: 2px; }
+
+    .sunset-info { text-align: right; }
+
+    /* ── 7 DAY ── */
+    .daily-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .day-row {
+      display: flex;
+      align-items: center;
+      padding: 9px 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 8px;
+    }
+
+    .day-row:last-child { border-bottom: none; }
+
+    .day-name { width: 70px; font-size: 0.88rem; font-weight: 500; }
+    .day-rain { width: 48px; font-size: 0.78rem; color: #74b4d4; display: flex; align-items: center; gap: 3px; }
+    .day-icons { display: flex; gap: 4px; font-size: 1.2rem; flex: 1; justify-content: center; }
+    .day-range { font-size: 0.88rem; white-space: nowrap; color: #cdd9e8; }
+    .day-range .hi { font-weight: 700; color: #fff; }
+
+    /* ── LOADING / ERROR ── */
+    .loading-state {
+      text-align: center;
+      padding: 40px;
+      color: #8ecae6;
+      font-size: 0.9rem;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .error-state { color: #ff8080; text-align: center; padding: 20px; font-size: 0.85rem; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .updated { font-size: 0.75rem; color: #556; }
+
+    .refresh-btn {
+      background: rgba(142,202,230,0.14);
+      border: 1px solid rgba(142,202,230,0.28);
+      color: #8ecae6;
+      padding: 10px 30px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+    }
+
+    .refresh-btn:hover { background: rgba(142,202,230,0.25); }
+  </style>
+</head>
+<body>
+
+<div class="greeting">
+  <div class="greeting-salute" id="greeting-salute"></div>
+  <div class="greeting-names">Luciana &amp; Roberto</div>
+</div>
+
+<div class="verse-block" id="verse-block">
+  <div class="verse-loading">A carregar versículo do dia…</div>
+</div>
+
+<div class="cities">
+  <div class="city-card" id="card-peterborough">
+    <div class="loading-state">A carregar Peterborough…</div>
+  </div>
+  <div class="city-card" id="card-boston">
+    <div class="loading-state">A carregar Boston…</div>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="refresh-btn" onclick="fetchAll()">↻ Atualizar</button>
+  <div class="updated" id="updated-at"></div>
+</div>
+
+<script>
+// ── SAUDAÇÃO ──
+function setGreeting() {
+  const h = new Date().getHours();
+  let salute, emoji;
+  if (h >= 5 && h < 12)       { salute = 'Bom Dia';    emoji = '🌅'; }
+  else if (h >= 12 && h < 19) { salute = 'Boa Tarde';  emoji = '☀️'; }
+  else                         { salute = 'Boa Noite';  emoji = '🌙'; }
+  document.getElementById('greeting-salute').textContent = `${emoji} ${salute}`;
+}
+
+// ── VERSÍCULO DO DIA — ARA (Almeida Revista e Atualizada) ──
+// Roda diariamente por uma lista de versículos populares
+const VERSES = [
+  'joao 3:16','jeremias 29:11','salmos 23:1','filipenses 4:13','romanos 8:28',
+  'isaias 40:31','salmos 46:1','proverbios 3:5-6','mateus 6:33','gálatas 5:22-23',
+  'salmos 27:1','romanos 8:38-39','hebreus 11:1','salmos 91:1-2','josue 1:9',
+  'efesios 2:8-9','mateus 11:28','salmos 34:8','romanos 5:8','salmos 119:105',
+  'filipenses 4:6-7','isaias 41:10','lucas 1:37','salmos 37:4','2 timoteo 1:7',
+  'joao 14:6','salmos 16:8','apocalipse 21:4','romanos 12:2','salmos 100:4-5',
+];
+
+async function fetchVerse() {
+  const el = document.getElementById('verse-block');
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const ref = VERSES[dayOfYear % VERSES.length];
+  try {
+    const res = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=almeida`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    el.innerHTML = `
+      <div class="verse-text">"${data.text.trim().replace(/\n/g, ' ')}"</div>
+      <div class="verse-ref">📖 ${data.reference} — ARA</div>
+    `;
+  } catch {
+    el.innerHTML = `
+      <div class="verse-text">"Porque sou eu que conheço os planos que tenho para vós, diz o Senhor, planos de paz e não de mal, para vos dar um futuro e uma esperança."</div>
+      <div class="verse-ref">📖 Jeremias 29:11 — ARA</div>
+    `;
+  }
+}
+
+function updateCityDatetime() {
+  const tz = 'Europe/London';
+  const now = new Date();
+  const timePart = now.toLocaleTimeString('pt-PT', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+  const datePart = now.toLocaleDateString('pt-PT', { timeZone: tz, weekday: 'short', day: '2-digit', month: 'short' });
+  CITIES.forEach(c => {
+    const el = document.getElementById(`datetime-${c.id}`);
+    if (el) el.innerHTML = `<span>${timePart}</span><div class="dt-date">${datePart}</div>`;
+  });
+}
+
+setGreeting();
+fetchVerse();
+
+const CITIES = [
+  { id: 'peterborough', name: 'Peterborough', region: 'Cambridgeshire · England', lat: 52.5695, lon: -0.2405 },
+  { id: 'boston',       name: 'Boston',       region: 'Lincolnshire · England',   lat: 52.9765, lon: -0.0202 },
+];
+
+// WMO code → [description, emoji, emoji-night]
+function wmo(code, isDay = true) {
+  const d = {
+    0:  ['Céu limpo',              '☀️', '🌙'],
+    1:  ['Maioritariamente limpo', '🌤️','🌙'],
+    2:  ['Parcialmente nublado',   '⛅','🌥️'],
+    3:  ['Nublado / Encoberto',    '☁️','☁️'],
+    45: ['Nevoeiro',               '🌫️','🌫️'],
+    48: ['Nevoeiro com gelo',      '🌫️','🌫️'],
+    51: ['Garoa leve',             '🌦️','🌦️'],
+    53: ['Garoa moderada',         '🌧️','🌧️'],
+    55: ['Garoa forte',            '🌧️','🌧️'],
+    61: ['Chuva leve',             '🌧️','🌧️'],
+    63: ['Chuva moderada',         '🌧️','🌧️'],
+    65: ['Chuva forte',            '🌧️','🌧️'],
+    71: ['Neve leve',              '🌨️','🌨️'],
+    73: ['Neve moderada',          '❄️','❄️'],
+    75: ['Neve intensa',           '❄️','❄️'],
+    77: ['Granizo de neve',        '🌨️','🌨️'],
+    80: ['Aguaceiros leves',       '🌦️','🌦️'],
+    81: ['Aguaceiros moderados',   '🌧️','🌧️'],
+    82: ['Aguaceiros violentos',   '⛈️','⛈️'],
+    85: ['Neve (aguaceiros)',      '🌨️','🌨️'],
+    86: ['Neve forte (aguaceiros)','❄️','❄️'],
+    95: ['Trovoada',               '⛈️','⛈️'],
+    96: ['Trovoada c/ granizo',    '⛈️','⛈️'],
+    99: ['Trovoada intensa',       '⛈️','⛈️'],
+  };
+  const entry = d[code] ?? ['Desconhecido', '🌡️', '🌡️'];
+  return { desc: entry[0], icon: isDay ? entry[1] : entry[2] };
+}
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
+function dayName(iso, index) {
+  if (index === 0) return 'Hoje';
+  if (index === 1) return 'Amanhã';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-PT', { weekday: 'short' })
+           .replace('.','')
+           .replace(/^\w/, c => c.toUpperCase());
+}
+
+async function fetchCity(city) {
+  const url =
+    `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${city.lat}&longitude=${city.lon}` +
+    `&current=temperature_2m,apparent_temperature,weather_code,is_day` +
+    `&hourly=temperature_2m,weather_code,precipitation_probability,is_day` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,snowfall_sum,rain_sum` +
+    `&wind_speed_unit=kmh&timezone=Europe/London&forecast_days=7`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('API error');
+  return r.json();
+}
+
+function sunArcSVG() {
+  return `<svg viewBox="0 0 70 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5 34 Q35 2 65 34" stroke="rgba(255,200,80,0.5)" stroke-width="1.5" fill="none" stroke-dasharray="3 2"/>
+    <circle cx="5" cy="34" r="3" fill="#ffd060"/>
+    <circle cx="65" cy="34" r="3" fill="rgba(255,150,60,0.6)"/>
+    <line x1="0" y1="35" x2="70" y2="35" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  </svg>`;
+}
+
+function buildCard(city, data) {
+  const c = data.current;
+  const h = data.hourly;
+  const d = data.daily;
+
+  const isDay = c.is_day === 1;
+  const cur = wmo(c.weather_code, isDay);
+  const maxT = Math.round(d.temperature_2m_max[0]);
+  const minT = Math.round(d.temperature_2m_min[0]);
+
+  // Horas desde agora até ao fim dos 7 dias, com separador de dia
+  const now = new Date();
+  const nowHour = now.getHours();
+  const startIdx = h.time.findIndex(t => {
+    const d2 = new Date(t);
+    return d2 >= now || (d2.getDate() === now.getDate() && d2.getHours() >= nowHour);
+  });
+  const slots = [];
+  let lastDay = null;
+  for (let i = Math.max(0, startIdx); i < h.time.length; i++) {
+    const dt = new Date(h.time[i]);
+    const dayStr = dt.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric' });
+    if (lastDay !== null && dayStr !== lastDay) {
+      slots.push({ divider: true, label: dayStr });
+    }
+    lastDay = dayStr;
+    slots.push({
+      time: fmtTime(h.time[i]),
+      icon: wmo(h.weather_code[i], h.is_day[i] === 1).icon,
+      temp: Math.round(h.temperature_2m[i]),
+      rain: h.precipitation_probability[i],
+    });
+  }
+
+  // 7-day daily
+  const days = d.time.map((t, i) => ({
+    name: dayName(t, i),
+    code: d.weather_code[i],
+    max:  Math.round(d.temperature_2m_max[i]),
+    min:  Math.round(d.temperature_2m_min[i]),
+    rain: d.precipitation_probability_max[i],
+    snow: d.snowfall_sum[i] > 0,
+  }));
+
+  const sunrise = fmtTime(d.sunrise[0]);
+  const sunset  = fmtTime(d.sunset[0]);
+
+  return `
+    <!-- HERO -->
+    <div class="hero">
+      <div class="city-label">
+        <div class="flag-circle">
+          <img src="https://flagcdn.com/w80/gb.png" alt="UK Flag" />
+        </div>
+        <span>${city.name}</span>
+        <span class="region">${city.region}</span>
+        <span class="city-datetime" id="datetime-${city.id}"></span>
+      </div>
+      <div class="hero-row">
+        <div class="main-temp">${Math.round(c.temperature_2m)}<sup>°</sup></div>
+        <div class="hero-right">
+          <div class="hi-lo">↑ ${maxT}° / ↓ ${minT}°</div>
+          <div class="feels">Sensação: ${Math.round(c.apparent_temperature)}°</div>
+        </div>
+      </div>
+      <div class="weather-summary">
+        <span class="wi">${cur.icon}</span>
+        <span>${cur.desc}. Mín. ${minT}°C.</span>
+      </div>
+    </div>
+
+    <!-- HOURLY -->
+    <div class="block">
+      <div class="block-title">⏱ Previsão Horária</div>
+      <div class="hourly-scroll">
+        ${slots.map(s => s.divider
+          ? `<div class="hour-item day-divider"></div>
+             <div class="hour-item day-label">${s.label}</div>
+             <div class="hour-item day-divider"></div>`
+          : `<div class="hour-item">
+               <span class="h-time">${s.time}</span>
+               <span class="h-icon">${s.icon}</span>
+               <span class="h-temp">${s.temp}°</span>
+               <span class="h-rain">💧${s.rain}%</span>
+             </div>`
+        ).join('')}
+      </div>
+    </div>
+
+    <!-- SUNRISE -->
+    <div class="sunrise-block">
+      <div class="sunrise-arc">${sunArcSVG()}</div>
+      <div class="sunrise-info">
+        <div class="sr-label">☀️ Nascer do sol</div>
+        <div class="sr-time">${sunrise}</div>
+        <div class="sr-sub">Não perca o amanhecer!</div>
+      </div>
+      <div class="sunset-info sunrise-info">
+        <div class="sr-label">🌅 Pôr do sol</div>
+        <div class="sr-time">${sunset}</div>
+      </div>
+    </div>
+
+    <!-- 7 DAYS -->
+    <div class="block">
+      <div class="block-title">📅 Próximos 7 Dias</div>
+      <div class="daily-list">
+        ${days.map(day => `
+          <div class="day-row">
+            <span class="day-name">${day.name}</span>
+            <span class="day-rain">💧 ${day.rain}%</span>
+            <span class="day-icons">
+              ${wmo(day.code, true).icon}
+              ${day.snow ? '❄️' : ''}
+            </span>
+            <span class="day-range">
+              <span class="hi">${day.max}°</span> / ${day.min}°
+            </span>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function fetchAll() {
+  document.getElementById('updated-at').textContent = '';
+
+  CITIES.forEach(c => {
+    document.getElementById(`card-${c.id}`).innerHTML =
+      `<div class="loading-state">A carregar ${c.name}…</div>`;
+  });
+
+  await Promise.all(CITIES.map(async city => {
+    const el = document.getElementById(`card-${city.id}`);
+    try {
+      const data = await fetchCity(city);
+      el.innerHTML = buildCard(city, data);
+    } catch (e) {
+      el.innerHTML = `<div class="error-state">Não foi possível obter dados para ${city.name}.<br>${e.message}</div>`;
+    }
+  }));
+
+  updateCityDatetime();
+
+  const now = new Date();
+  document.getElementById('updated-at').textContent =
+    `Atualizado: ${now.toLocaleTimeString('pt-PT')} — ${now.toLocaleDateString('pt-PT')}`;
+}
+
+fetchAll();
+updateCityDatetime();
+setInterval(updateCityDatetime, 60000);
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>
